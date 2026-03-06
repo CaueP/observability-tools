@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  lgtm:
+    image: grafana/otel-lgtm:0.20.0
+    container_name: lgtm
+    restart: unless-stopped
+
+    # Ports exposed by docker-otel-lgtm (from run-lgtm.sh)
+    ports:
+      - "4000:3000" # Grafana
+      - "4040:4040" # Pyroscope
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+      - "9090:9090" # Prometheus
+
+    # Load configuration and logging options from a local .env file.
+    env_file:
+      - .env
+
+    environment:
+      # Match the official run-lgtm.sh script so Grafana stores data under /data/grafana
+      GF_PATHS_DATA: /data/grafana
+
+    # Persist data across container restarts, following run-lgtm.sh layout.
+    # Data will be stored under ./container/{grafana,prometheus,loki}.
+    volumes:
+      - ./container/grafana:/data/grafana
+      - ./container/prometheus:/data/prometheus
+      - ./container/loki:/data/loki
+      - ./otelcol-config.yaml:/otel-lgtm/otelcol-config.yaml:delegated
+    # To enable OBI (eBPF auto-instrumentation) as described in the docs:
+    #   - Use Linux kernel 5.8+ with BTF support
+    #   - Add ENABLE_OBI=true (and optional OBI_TARGET, OTEL_EBPF_* vars) in .env or environment
+    #   - Then you may also need host PID namespace and privileged mode, similar to run-lgtm.sh:
+    # pid: "host"
+    # privileged: true
