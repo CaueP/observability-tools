@@ -20,27 +20,20 @@ Provide a ready-to-use observability backend that:
 ## Quick Start
 
 1. **Clone and enter the repo**
-
-   ```bash
-   cd observability-tools
-   ```
-
 2. **Start the stack**
 
    ```bash
-   docker compose up -d
+   docker compose up
    ```
 
 3. **Open Grafana**
-
    - URL: [http://localhost:4000](http://localhost:4000)
-   - Login: `admin` / `admin`
 
 4. **Send telemetry**
 
    Point your instrumented apps at the OTLP endpoints:
 
-   - **HTTP (OTLP):** `http://localhost:4318`
+   - **HTTP:** `http://localhost:4318`
    - **gRPC:** `http://localhost:4317`
 
    These are OpenTelemetry's default endpoints, so no extra config is usually needed.
