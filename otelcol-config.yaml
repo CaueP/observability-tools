@@ -7,7 +7,11 @@ receivers:
         endpoint: 0.0.0.0:4318
         cors:
           allowed_origins:
-            - "*"
+            - "http://*"
+            - "https://*"
+            - "localhost:*"
+          allowed_headers: ["*"]
+          max_age: 7200
   prometheus/collector:
     config:
       scrape_configs:
@@ -68,8 +72,8 @@ service:
     metrics:
       receivers: [otlp, prometheus/collector]
       processors: [batch]
-      # exporters: [otlphttp/metrics]
-      exporters: [otlphttp/metrics,debug/metrics]
+      exporters: [otlphttp/metrics]
+      # exporters: [otlphttp/metrics,debug/metrics]
     logs:
       receivers: [otlp]
       processors: [batch]
