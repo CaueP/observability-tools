@@ -19,24 +19,29 @@ Provide a ready-to-use observability backend that:
 
 ## Quick Start
 
-1. **Clone and enter the repo**
-2. **Start the stack**
+1. Clone and enter the repo
+3. Create a shared docker network
+   ```bash
+   docker network create shared-observability-network
+   ```
+2. Start the stack
 
    ```bash
    docker compose up
    ```
 
-3. **Open Grafana**
+3. Open Grafana
    - URL: [http://localhost:4000](http://localhost:4000)
 
-4. **Send telemetry**
-
+4. Send telemetry
    Point your instrumented apps at the OTLP endpoints:
 
    - **HTTP:** `http://localhost:4318`
    - **gRPC:** `http://localhost:4317`
 
    These are OpenTelemetry's default endpoints, so no extra config is usually needed.
+
+   For details on sending additional observability signals (such as Prometheus metrics), see the [Send telemetry signals](#send-telemetry-signals) section below.
 
 ## Ports
 
@@ -47,6 +52,72 @@ Provide a ready-to-use observability backend that:
 | 4317 | OTLP gRPC    | Ingest telemetry           |
 | 4318 | OTLP HTTP    | Ingest telemetry           |
 | 9090 | Prometheus   | Metrics                    |
+
+## Send telemetry signals
+### Prometheus metrics
+
+Prometheus metrics can be scraped from your applications and sent to the LGTM stack via the built-in OpenTelemetry Collector.
+
+#### How to scrape service metrics
+
+The Collector's [`otelcol-config.yaml`](./otelcol-config.yaml) comes pre-configured to scrape its own metrics for visibility. To scrape metrics from your own service(s), edit the `scrape_configs` section under `prometheus/collector` in `otelcol-config.yaml`:
+
+```yaml
+receivers:
+  prometheus/collector:
+    config:
+      scrape_configs:
+        - job_name: "opentelemetry-collector"
+          scrape_interval: 5s
+          static_configs:
+            - targets: ["127.0.0.1:8888"]
+        # Add a job to scrape metrics from your service
+        - job_name: "service-metrics"
+          scrape_interval: 5s
+          scheme: "http"
+          metrics_path: "/metrics"
+          static_configs:
+            # Replace with your service's name (as resolved within the Docker network) and port
+            - targets: ["service-host:8000"]
+```
+
+**Steps:**
+
+1. **Uncomment or add a new `job_name` block for your service** under `scrape_configs`.
+2. **Set the `targets` field** to point to the service exposing Prometheus metrics (hostname and port, e.g., `"my-app:8000"`).
+   - If your instrumented service is another Docker container on the same network, use its container name as `service-host`.
+3. **Restart the stack** to pick up config changes:
+
+   ```bash
+   docker compose restart
+   ```
+
+**Tips:**
+- The `shared-observability-network` Docker network allows all containers in the network to be scraped by name.
+- Make sure your application's metrics endpoint is reachable from the collector container.
+
+**Example:**
+
+If your `docker-compose.yaml` for your app looks like:
+
+```yaml
+services:
+  my-app:
+    image: myorg/myapp
+    networks:
+      - shared-observability-network
+    ports:
+      - "8000:8000"
+networks:
+  shared-observability-network:
+    external: true
+```
+
+You can set `- targets: ["my-app:8000"]` in your `otelcol-config.yaml`.
+
+For more details, see [Prometheus Receiver docs](https://opentelemetry.io/docs/collector/configuration/#prometheus-receiver).
+
+
 
 ## Configuration
 

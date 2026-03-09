@@ -12,9 +12,18 @@ receivers:
     config:
       scrape_configs:
         - job_name: "opentelemetry-collector"
-          scrape_interval: 1s
+          scrape_interval: 5s
           static_configs:
             - targets: ["127.0.0.1:8888"]
+        # Add a job to scrape metrics from your service
+        # - job_name: "service-metrics"
+        #   scrape_interval: 5s
+        #   scheme: "http"
+        #   metrics_path: "/metrics"
+        #   static_configs:
+        #     # Replace "service-name" with your service name and the port Prometheus metrics are exposed on
+        #     # To use the service-name as hostname, ensure the services are in the same docker network
+        #     - targets: ["service-host:8000"]
 
 extensions:
   health_check:
@@ -59,8 +68,8 @@ service:
     metrics:
       receivers: [otlp, prometheus/collector]
       processors: [batch]
-      exporters: [otlphttp/metrics]
-      #exporters: [otlphttp/metrics,debug/metrics]
+      # exporters: [otlphttp/metrics]
+      exporters: [otlphttp/metrics,debug/metrics]
     logs:
       receivers: [otlp]
       processors: [batch]

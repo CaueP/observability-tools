@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   lgtm:
     image: grafana/otel-lgtm:0.20.0
@@ -35,3 +33,10 @@ services:
     #   - Then you may also need host PID namespace and privileged mode, similar to run-lgtm.sh:
     # pid: "host"
     # privileged: true
+    networks:
+      - shared
+
+networks:
+  shared:
+    external: true
+    name: shared-observability-network
